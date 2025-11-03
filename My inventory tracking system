@@ -1,1 +1,236 @@
+-- filepath: c:\workspace\answers.sql
+-- ...existing code...
 
+/*
+Inventory Tracking System - single .sql deliverable
+Includes: CREATE DATABASE, USE, CREATE TABLE statements and relationship constraints.
+Run on MySQL 5.7+ / 8.0 (InnoDB).
+*/
+
+CREATE DATABASE IF NOT EXISTS inventory_system
+  CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+USE inventory_system;
+
+-- Users (employees)
+CREATE TABLE users (
+  user_id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(100) NOT NULL UNIQUE,
+  full_name VARCHAR(200) NOT NULL,
+  email VARCHAR(200) UNIQUE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Suppliers
+CREATE TABLE suppliers (
+  supplier_id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(200) NOT NULL,
+  contact_email VARCHAR(200),
+  phone VARCHAR(50),
+  CONSTRAINT ux_supplier_name UNIQUE (name)
+) ENGINE=InnoDB;
+
+-- Categories
+CREATE TABLE categories (
+  category_id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL UNIQUE,
+  description TEXT
+) ENGINE=InnoDB;
+
+-- Warehouses
+CREATE TABLE warehouses (
+  warehouse_id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) NOT NULL UNIQUE,
+  name VARCHAR(200) NOT NULL,
+  address VARCHAR(300),
+  is_active TINYINT(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB;
+
+-- Products (each product belongs to one category, optional primary supplier)
+CREATE TABLE products (
+  product_id INT AUTO_INCREMENT PRIMARY KEY,
+  sku VARCHAR(100) NOT NULL UNIQUE,
+  name VARCHAR(300) NOT NULL,
+  category_id INT NOT NULL,
+  supplier_id INT NULL,
+  unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  unit_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  reorder_level INT NOT NULL DEFAULT 0,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  CONSTRAINT fk_products_category FOREIGN KEY (category_id)
+    REFERENCES categories(category_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_products_supplier FOREIGN KEY (supplier_id)
+    REFERENCES suppliers(supplier_id)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Stock levels (product <-> warehouse) - composite PK
+CREATE TABLE stock_levels (
+  product_id INT NOT NULL,
+  warehouse_id INT NOT NULL,
+  quantity INT NOT NULL DEFAULT 0,
+  reserved INT NOT NULL DEFAULT 0,
+  last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (product_id, warehouse_id),
+  CONSTRAINT fk_stock_product FOREIGN KEY (product_id)
+    REFERENCES products(product_id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_stock_warehouse FOREIGN KEY (warehouse_id)
+    REFERENCES warehouses(warehouse_id)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Transactions (inventory movements)
+CREATE TABLE transactions (
+  transaction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  transaction_type ENUM('IN','OUT','TRANSFER','ADJUST') NOT NULL,
+  reference_no VARCHAR(100),
+  source_warehouse_id INT,
+  dest_warehouse_id INT,
+  performed_by INT NOT NULL,
+  notes TEXT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_tx_performed_by FOREIGN KEY (performed_by)
+    REFERENCES users(user_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_tx_src_wh FOREIGN KEY (source_warehouse_id)
+    REFERENCES warehouses(warehouse_id)
+    ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT fk_tx_dest_wh FOREIGN KEY (dest_warehouse_id)
+    REFERENCES warehouses(warehouse_id)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Transaction items (junction table: transactions -> products)
+CREATE TABLE transaction_items (
+  transaction_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  transaction_id BIGINT NOT NULL,
+  product_id INT NOT NULL,
+  quantity INT NOT NULL,
+  unit_cost DECIMAL(12,2),
+  CONSTRAINT fk_ti_tx FOREIGN KEY (transaction_id)
+    REFERENCES transactions(transaction_id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_ti_product FOREIGN KEY (product_id)
+    REFERENCES products(product_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB;
+```-- filepath: c:\workspace\answers.sql
+-- ...existing code...
+
+/*
+Inventory Tracking System - single .sql deliverable
+Includes: CREATE DATABASE, USE, CREATE TABLE statements and relationship constraints.
+Run on MySQL 5.7+ / 8.0 (InnoDB).
+*/
+
+CREATE DATABASE IF NOT EXISTS inventory_system
+  CHARACTER SET = utf8mb4
+  COLLATE = utf8mb4_unicode_ci;
+USE inventory_system;
+
+-- Users (employees)
+CREATE TABLE users (
+  user_id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(100) NOT NULL UNIQUE,
+  full_name VARCHAR(200) NOT NULL,
+  email VARCHAR(200) UNIQUE,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Suppliers
+CREATE TABLE suppliers (
+  supplier_id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(200) NOT NULL,
+  contact_email VARCHAR(200),
+  phone VARCHAR(50),
+  CONSTRAINT ux_supplier_name UNIQUE (name)
+) ENGINE=InnoDB;
+
+-- Categories
+CREATE TABLE categories (
+  category_id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL UNIQUE,
+  description TEXT
+) ENGINE=InnoDB;
+
+-- Warehouses
+CREATE TABLE warehouses (
+  warehouse_id INT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) NOT NULL UNIQUE,
+  name VARCHAR(200) NOT NULL,
+  address VARCHAR(300),
+  is_active TINYINT(1) NOT NULL DEFAULT 1
+) ENGINE=InnoDB;
+
+-- Products (each product belongs to one category, optional primary supplier)
+CREATE TABLE products (
+  product_id INT AUTO_INCREMENT PRIMARY KEY,
+  sku VARCHAR(100) NOT NULL UNIQUE,
+  name VARCHAR(300) NOT NULL,
+  category_id INT NOT NULL,
+  supplier_id INT NULL,
+  unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  unit_price DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  reorder_level INT NOT NULL DEFAULT 0,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  CONSTRAINT fk_products_category FOREIGN KEY (category_id)
+    REFERENCES categories(category_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_products_supplier FOREIGN KEY (supplier_id)
+    REFERENCES suppliers(supplier_id)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Stock levels (product <-> warehouse) - composite PK
+CREATE TABLE stock_levels (
+  product_id INT NOT NULL,
+  warehouse_id INT NOT NULL,
+  quantity INT NOT NULL DEFAULT 0,
+  reserved INT NOT NULL DEFAULT 0,
+  last_updated DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (product_id, warehouse_id),
+  CONSTRAINT fk_stock_product FOREIGN KEY (product_id)
+    REFERENCES products(product_id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_stock_warehouse FOREIGN KEY (warehouse_id)
+    REFERENCES warehouses(warehouse_id)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Transactions (inventory movements)
+CREATE TABLE transactions (
+  transaction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  transaction_type ENUM('IN','OUT','TRANSFER','ADJUST') NOT NULL,
+  reference_no VARCHAR(100),
+  source_warehouse_id INT,
+  dest_warehouse_id INT,
+  performed_by INT NOT NULL,
+  notes TEXT,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_tx_performed_by FOREIGN KEY (performed_by)
+    REFERENCES users(user_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT fk_tx_src_wh FOREIGN KEY (source_warehouse_id)
+    REFERENCES warehouses(warehouse_id)
+    ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT fk_tx_dest_wh FOREIGN KEY (dest_warehouse_id)
+    REFERENCES warehouses(warehouse_id)
+    ON UPDATE CASCADE ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Transaction items (junction table: transactions -> products)
+CREATE TABLE transaction_items (
+  transaction_item_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  transaction_id BIGINT NOT NULL,
+  product_id INT NOT NULL,
+  quantity INT NOT NULL,
+  unit_cost DECIMAL(12,2),
+  CONSTRAINT fk_ti_tx FOREIGN KEY (transaction_id)
+    REFERENCES transactions(transaction_id)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT fk_ti_product FOREIGN KEY (product_id)
+    REFERENCES products(product_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB;
